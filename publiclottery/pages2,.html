@@ -1,0 +1,13 @@
+{% extends "global/Page.html" %}
+
+{% block title %}
+  2ページ目
+{% endblock %}
+
+{% block content %}
+  <p>{{ summary }}</p>
+
+  <p>（ここに次の課題・説明・確認表示などを追加できます）</p>
+
+  {% next_button %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "global/Page.html" %}
+
+{% block title %}
+最終結果
+{% endblock %}
+
+{% block content %}
+<p>最終ラウンドの提案額：</p>
+<ul>
+  {% for x in proposals %}
+    <li>{{ x }}円</li>
+  {% endfor %}
+</ul>
+
+{% if reached_agreement %}
+  <p><b>全員一致</b>したので、購入額は <b>{{ final_price }}円</b> です。</p>
+{% else %}
+  <p>全員一致しなかったので、<b>中央値</b>を採用します。</p>
+  <p>購入額は <b>{{ final_price }}円</b> です。</p>
+{% endif %}
+
+{{ next_button }}
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "global/Page.html" %}
+
+{% block title %}
+ラウンド {{ round_number }} / {{ num_rounds }}：入力結果
+{% endblock %}
+
+{% block content %}
+<p>全員の提案額（円）です：</p>
+
+<ul>
+  {% for x in proposals %}
+    <li>{{ x }}円</li>
+  {% endfor %}
+</ul>
+
+{{ next_button }}
+{% endblock %}

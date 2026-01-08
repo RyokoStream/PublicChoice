@@ -1,0 +1,112 @@
+
+{{ block title }}
+    {% if is_ambiguity %}選択課題（確率不明）{% else %}選択課題{% endif %}
+{{ endblock }}
+
+{{ block content }}
+
+    <style>
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 6px solid #007bff;
+            margin-bottom: 30px;
+        }
+
+        .table-mpl {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .table-mpl tr {
+            background-color: #ffffff;
+            transition: background-color 0.2s;
+            border: 1px solid #dee2e6;
+        }
+
+        .table-mpl tr:hover {
+            background-color: #f1f7ff;
+        }
+
+        .table-mpl td {
+            padding: 15px !important;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .text-center { text-align: center; }
+        .text-end { text-align: right; }
+        .text-start { text-align: left; }
+        
+        input[type="radio"] {
+            transform: scale(1.4);
+            cursor: pointer;
+        }
+
+        .option-label {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            margin: 0;
+            padding: 10px;
+        }
+    </style>
+
+    <div class="instructions">
+        <p>以下の各行について、どちらか好きな方を選んでください。</p>
+        <p>現在のオプション：<b>{{ lottery_text }}</b></p>
+    </div>
+
+    <table class="table-mpl">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th class="text-center">選択A (確実)</th>
+                <th class="text-center">A</th>
+                <th class="text-center">B</th>
+                <th class="text-center">選択B (くじ)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td class="text-muted">{{ forloop.counter }}</td>
+                <td class="text-end">
+                    <b>{{ row.label }}</b> を確実にもらう
+                </td>
+                <td class="text-center">
+                    <label class="option-label">
+                        <!-- choice.jsが値を判別できるよう value="2" (確実) に設定 -->
+                        <input type="radio" name="{{ row.field_name }}" value="2" required>
+                    </label>
+                </td>
+                <td class="text-center">
+                    <label class="option-label">
+                        <!-- choice.jsが値を判別できるよう value="1" (くじ) に設定 -->
+                        <input type="radio" name="{{ row.field_name }}" value="1" required>
+                    </label>
+                </td>
+                <td class="text-start">
+                    {{ lottery_text }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="text-center mt-5">
+        <!-- classに btn-primary を含めることで choice.js のイベントリスナーが紐付きます -->
+        <button type="button" class="btn btn-primary btn-lg px-5">回答を送信して次へ</button>
+    </div>
+
+    {# ページ遷移用の隠しボタン（choice.js から click されます） #}
+    <button class="otree-btn-next btn btn-primary" style="display:none;">Next</button>
+
+    {# 静的ファイルの読み込み #}
+    <script src="{{ static 'mpl_japanese/choice.js' }}"></script>
+
+{{ endblock }}
