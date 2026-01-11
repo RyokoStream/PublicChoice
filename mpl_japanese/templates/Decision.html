@@ -1,0 +1,36 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+{% block title %}
+選択課題
+{% endblock %}
+
+{% block content %}
+
+<p>以下の各行で、どちらかを選んでください。</p>
+
+<table class="table">
+  <tbody>
+    {% for field in form %}
+    <tr>
+      <td>
+        {{ field.0 }}
+        確実な金額 {{ field.label }} をもらう
+      </td>
+      <td>
+        {{ field.1 }}
+        状態１（確率{{ C.LOTTERY_PROBABILITY }}%）で{{ C.LOTTERY_HIGH }}円，
+        状態２（確率{{ C.LOTTERY_PROBABILITY }}%）で{{ C.LOTTERY_LOW }}円のくじ
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{{ formfields }}
+
+<div class="text-center mt-4">
+    {{ next_button }}
+</div>
+
+{% endblock %}

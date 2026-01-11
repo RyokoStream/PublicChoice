@@ -1,0 +1,45 @@
+{{ extends "global/Page.html" }}
+
+{{ block title }}
+    {{ if is_ambiguity }}選択課題（確率不明）{{ else }}選択課題{{ endif }}
+{{ endblock }}
+
+{{ block content }}
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 6px solid #007bff; margin-bottom: 30px;">
+        <p>以下の各行について、どちらか好きな方を選んでください。</p>
+        <p>現在のくじの内容：<b>{{ lottery_text }}</b></p>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th style="text-align: right;">選択A（確実）</th>
+                <th style="text-align: center;">AかBを選択</th>
+                <th style="text-align: left;">選択B（くじ）</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ for row in rows }}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td style="text-align: right;"><b>{{ row.label }}</b> を確実にもらう</td>
+                <td style="text-align: center;">
+                    {% formfield row.field_name label="" %}
+                </td>
+                <td style="text-align: left;">{{ lottery_text }}</td>
+            </tr>
+            {{ endfor }}
+        </tbody>
+    </table>
+
+    <div style="text-align: center; margin-top: 40px;">
+        {{ next_button }}
+    </div>
+
+    <style>
+        /* ラジオボタンのラベルを消してスッキリさせる */
+        .form-check-label { display: none; }
+        .controls { display: flex; justify-content: center; }
+    </style>
+{{ endblock }}

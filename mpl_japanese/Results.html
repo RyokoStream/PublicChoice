@@ -1,29 +1,18 @@
 {{ extends "global/Page.html" }}
+
 {{ block title }}結果{{ endblock }}
 
 {{ block content }}
+    <p>選ばれた課題：<b>{{ choice_type_text }}</b></p>
+    <p>選ばれた金額：<b>{{ selected_amount }}円</b></p>
+    <hr>
+    <p>あなたはこの行で <b>「{{ choice_text }}」</b> を選択していました。</p>
+    
+    {{ if was_lottery }}
+        <p>くじの結果、あなたの獲得額は <b>{{ payoff }}円</b> です。</p>
+    {{ else }}
+        <p>確実な金額を選んだため、あなたの獲得額は <b>{{ payoff }}円</b> です。</p>
+    {{ endif }}
 
-<p>
-  選ばれた課題：<b>{{ choice_type_text }}</b>
-</p>
-
-<p>
-  ランダムに選ばれた金額：<b>{{ selected_amount }}円</b>
-</p>
-
-<p>
-  あなたの選択：<b>{{ choice_text }}</b>
-</p>
-
-{{ if was_lottery }}
-  <p>
-    くじの結果：<b>{{ lottery_outcome }}円</b>
-  </p>
-{{ endif }}
-
-<p>
-  あなたの獲得金額：<b>{{ payoff }}円</b>
-</p>
-
-
+    {{ next_button }}
 {{ endblock }}

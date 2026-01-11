@@ -1,0 +1,92 @@
+{% extends "global/Page.html" %}
+{% load otree %}
+
+{% block title %}
+選択課題
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .instructions {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 6px solid #007bff;
+        margin-bottom: 30px;
+    }
+    .table-mpl td {
+        padding: 14px !important;
+        vertical-align: middle;
+    }
+    .text-center { text-align: center; }
+    .text-end { text-align: right; }
+    input[type="radio"] {
+        transform: scale(1.3);
+        cursor: pointer;
+    }
+</style>
+
+<div class="instructions">
+    <p>
+        以下の各行について、<b>どちらか一方</b>を選んでください。
+    </p>
+
+    {% if is_ambiguity %}
+        <p>
+            選択B（くじ）：<b>1000円 または 0円</b><br>
+            どちらの結果がどの程度の確率で起こるかはわかりません。
+        </p>
+    {% else %}
+        <p>
+            選択B（くじ）：<b>1000円（50%）または 0円（50%）</b>
+        </p>
+    {% endif %}
+</div>
+
+<table class="table table-hover table-mpl">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th class="text-end">選択A（確実）</th>
+            <th class="text-center">A</th>
+            <th class="text-center">B</th>
+            <th>選択B</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td class="text-muted">{{ forloop.counter }}</td>
+            <td class="text-end">
+                <b>{{ row.label }}</b> を確実にもらう
+            </td>
+            <td class="text-center">
+                <input type="radio"
+                       name="mpl_{{ row.idx }}"
+                       value="2"
+                       required>
+            </td>
+            <td class="text-center">
+                <input type="radio"
+                       name="mpl_{{ row.idx }}"
+                       value="1"
+                       required>
+            </td>
+            <td>
+                {% if is_ambiguity %}
+                    1000円 または 0円（確率不明）
+                {% else %}
+                    1000円（50%）または 0円（50%）
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="text-center mt-4">
+    {{ next_button }}
+</div>
+
+{% endblock %}
