@@ -1,27 +1,29 @@
-
 {% extends "global/Page.html" %}
 
 {% block title %}
-ラウンド {{ round_number }} / {{ num_rounds }}
+    ラウンド {{ round_number }} / {{ num_rounds }}
 {% endblock %}
 
 {% block content %}
-<p><b>{{ lottery_text }}</b></p>
+    <p><b>{{ lottery_text }}</b></p>
 
-{% if history %}
-  <h4>これまでの提案（履歴）</h4>
-  {% for h in history %}
-    <p><b>ラウンド {{ h.round }}</b>：</p>
-    <ul>
-      {% for p in h.proposals %}
-        <li>P{{ p.id }} = {{ p.value }}円</li>
+    {% if history %}
+      <h4>これまでの提案（履歴）</h4>
+      {% for h in history %}
+        <p><b>ラウンド {{ h.round }}</b>：</p>
+        <ul>
+          {% for p in h.proposals %}
+            <li>P{{ p.id }} = {{ p.value }}円</li>
+          {% endfor %}
+        </ul>
       {% endfor %}
-    </ul>
-  {% endfor %}
-  <hr>
-{% endif %}
+      <hr>
+    {% endif %}
 
-<p>購入額（円）を入力してください（0〜1500）：</p>
-{{ formfields }}
-{{ next_button }}
+    <p>購入額（円）を入力してください（0〜1000）：</p>
+    
+    {# ここを formfield (単数形) にするか、このまま formfields (複数形) 1行だけにします #}
+    {{ formfields }}
+
+    {% next_button %}
 {% endblock %}

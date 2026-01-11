@@ -1,0 +1,16 @@
+{% extends "global/Page.html" %}
+
+{% block title %}
+    公共財ゲームの意思決定
+{% endblock %}
+
+{% block content %}
+    <p>あなたの手元には550円あります。公共プロジェクトにいくら寄付しますか？</p>
+    <p>50円刻みで入力してください（50円〜550円）。</p>
+
+    {# ここで質問を1回だけ表示します #}
+    {{ formfield 'choice' }}
+
+    <br>
+    {% next_button %}
+{% endblock %}
