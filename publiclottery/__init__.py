@@ -24,8 +24,6 @@ class Player(BasePlayer):
         min=0, max=1000
     )
 
-# --- ページ定義 ---
-
 class Propose(Page):
     form_model = 'player'
     form_fields = ['proposal']
@@ -34,7 +32,6 @@ class Propose(Page):
     def is_displayed(player):
         if player.round_number == 1:
             return True
-        # 前のラウンドを参照し、合意済みならスキップ
         prev_round = player.round_number - 1
         return not player.group.in_round(prev_round).reached_agreement
 
@@ -54,17 +51,23 @@ class Propose(Page):
                 })
             history.append(dict(round=r, proposals=round_proposals))
         
+        # HTMLで使っている「round_number」と「num_rounds」を確実に追加
         return dict(
+            round_number=player.round_number,
+            num_rounds=C.NUM_ROUNDS,
             history=history,
             prize_total=prize_total,
-            group_size=group_size
+            group_size=group_size,
+            lottery_text=f"公共くじ：当たり {prize_total}円／はずれ 0円"
         )
 
 class WaitAfterPropose(WaitPage):
+    title_text = "待機中"
+    body_text = "他の参加者の入力を待っています。"
+
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
-        # proposalが入っていない場合に備えてデフォルト値(0)を考慮
         proposals = [p.proposal if p.proposal is not None else 0 for p in players]
         
         all_same = len(set(proposals)) == 1
@@ -80,14 +83,12 @@ class WaitAfterPropose(WaitPage):
             group.reached_agreement = False
             group.final_price = 0
 
-        # 合意した、あるいは最終回の場合に計算を実行
         if group.reached_agreement or group.round_number == C.NUM_ROUNDS:
             group.lottery_win = random.random() < C.WIN_PROB
             prize_each = C.PRIZE_PER_PERSON if group.lottery_win else 0
             
             for p in players:
                 p.payoff = prize_each - group.final_price
-                # HTMLで呼び出す可能性のある名前をすべて「確実」に保存
                 p.participant.vars['public_lottery_payoff'] = p.payoff
                 p.participant.vars['final_price'] = group.final_price
                 p.participant.vars['reached_agreement'] = group.reached_agreement
@@ -102,10 +103,16 @@ class Results(Page):
 
     @staticmethod
     def vars_for_template(player):
-        return {
-            'payoff': player.payoff,
-            'final_price': player.group.final_price,
-            'lottery_win': player.group.lottery_win,
-        }
+        group = player.group
+        return dict(
+            payoff=player.payoff,
+            final_price=group.final_price,
+            lottery_win=group.lottery_win,
+            reached_agreement=group.reached_agreement,
+            group_size=len(group.get_players()),
+            prize_total=group.prize_total,
+            proposals=[p.proposal for p in group.get_players()],
+            per_capita_prize=C.PRIZE_PER_PERSON
+        )
 
 page_sequence = [Propose, WaitAfterPropose, Results]
