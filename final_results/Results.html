@@ -16,6 +16,17 @@
                     <th>第2部：公共くじ課題</th>
                     <td>{{ pub_amt }} 円</td>
                 </tr>
+                <tr>
+                    <td colspan="2" class="text-muted" style="font-size: 0.9em; padding-left: 2em; border-top: none;">
+                        └ グループでの決定投資額：<strong>{{ participant.vars.final_price }} 円</strong><br>
+                        └ 決定方法：
+                        {% if participant.vars.reached_agreement %}
+                            全員一致
+                        {% else %}
+                            中央値（ミディアン）
+                        {% endif %}
+                    </td>
+                </tr>
                 <tr class="table-primary">
                     <th><strong>合計獲得金額</strong></th>
                     <td><strong>{{ total_payoff }} 円</strong></td>
@@ -24,7 +35,8 @@
 
             <div class="alert alert-info">
                 <small>
-                    ※第1部は、あなたの22個の選択からランダムに1つが選ばれ、その結果が支払われています。
+                    ※第1部は、あなたの22個の選択からランダムに1つが選ばれ、その結果が支払われています。<br>
+                    ※第2部は、グループでの投資決定に基づき、1/2の確率で当たり（{{ prize_total }}円）か、はずれ（0円）が決まりました。
                 </small>
             </div>
         </div>
