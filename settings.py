@@ -7,15 +7,24 @@ ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD') or 'Ryoko0903'
 
 # Session Configurations
 SESSION_CONFIGS = [
+    # 1. 本番用：リスク計測、公共くじ、そして最終結果を連続で行う
+    dict(
+        name='combined_experiment',
+        display_name="【本番用】リスク計測と公共くじ実験（一連の流れ）",
+        num_demo_participants=3,
+        app_sequence=['mpl_japanese', 'publiclottery', 'final_results']
+    ),
+    # 2. 個別テスト用：MPLのみ
     dict(
         name='mpl_japanese_session',
-        display_name="MPL 日本語版",
+        display_name="MPL 日本語版（単体テスト）",
         num_demo_participants=1,
         app_sequence=['mpl_japanese']
     ),
+    # 3. 個別テスト用：公共くじのみ
     dict(
         name='publiclottery_session',
-        display_name="Public Lottery (dev)",
+        display_name="Public Lottery（単体テスト）",
         num_demo_participants=3,
         app_sequence=['publiclottery']
     ),
@@ -28,10 +37,12 @@ SESSION_CONFIG_DEFAULTS = dict(
     doc=""
 )
 
-PARTICIPANT_FIELDS = []
+# 参加者やセッションごとの変数を保存する場所
+PARTICIPANT_FIELDS = ['mpl_payoff',
+'public_lottery_payoff',]
 SESSION_FIELDS = []
 
-# Localization
+# Localization (日本語設定)
 LANGUAGE_CODE = 'ja'
 REAL_WORLD_CURRENCY_CODE = 'JPY'
 USE_POINTS = True
@@ -45,7 +56,14 @@ ROOMS = [
     dict(name='live_demo', display_name='Room for live demo'),
 ]
 
-INSTALLED_APPS = ['otree', 'mpl_japanese', 'publiclottery']
+# インストールされているアプリのリスト（新しく作ったアプリも忘れずに追加）
+INSTALLED_APPS = [
+    'otree', 
+    'mpl_japanese', 
+    'publiclottery', 
+    'final_results'
+]
 
 DEMO_PAGE_INTRO_HTML = """
-Here are some oTree games."""
+実験プログラムの管理画面です。
+"""

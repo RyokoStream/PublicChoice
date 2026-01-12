@@ -1,0 +1,35 @@
+{{ block title }}
+    最終結果のお知らせ
+{{ endblock }}
+
+{{ block content }}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <p>全ての課題が終了しました。今回のあなたの獲得金額は以下の通りです。</p>
+            
+            <table class="table">
+                <tr>
+                    <th>第1部：リスク選択課題（MPL）</th>
+                    <td>{{ mpl_amt }} 円</td>
+                </tr>
+                <tr>
+                    <th>第2部：公共くじ課題</th>
+                    <td>{{ pub_amt }} 円</td>
+                </tr>
+                <tr class="table-primary">
+                    <th><strong>合計獲得金額</strong></th>
+                    <td><strong>{{ total_payoff }} 円</strong></td>
+                </tr>
+            </table>
+
+            <div class="alert alert-info">
+                <small>
+                    ※第1部は、あなたの22個の選択からランダムに1つが選ばれ、その結果が支払われています。
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <p>確認できましたら、下のボタンを押して終了してください。</p>
+    {{ next_button }}
+{{ endblock }}
