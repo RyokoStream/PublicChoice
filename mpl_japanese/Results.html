@@ -1,18 +1,41 @@
 {{ extends "global/Page.html" }}
 
-{{ block title }}結果{{ endblock }}
+{% block title %}
+    {# 連結版（combined）のときはタイトルも隠す #}
+    {% if not 'combined' in session.config.name %}
+        結果
+    {% endif %}
+{% endblock %}
 
 {{ block content }}
-    <p>選ばれた課題：<b>{{ choice_type_text }}</b></p>
-    <p>選ばれた金額：<b>{{ selected_amount }}円</b></p>
-    <hr>
-    <p>あなたはこの行で <b>「{{ choice_text }}」</b> を選択していました。</p>
-    
-    {{ if was_lottery }}
-        <p>くじの結果、あなたの獲得額は <b>{{ payoff }}円</b> です。</p>
-    {{ else }}
-        <p>確実な金額を選んだため、あなたの獲得額は <b>{{ payoff }}円</b> です。</p>
-    {{ endif }}
+    {% if 'combined' in session.config.name %}
+        <style>
+            body { background-color: white !important; }
+            .otree-body { display: none !important; }
+        </style>
+        
+        <script>
+            // 読み込みの瞬間から非表示にする
+            document.documentElement.style.display = 'none'; 
+            window.onload = function() {
+                // 自動で次へボタン（otree-btn-next）をクリック
+                document.querySelector('.otree-btn-next').click();
+            };
+        </script>
+        <button class="otree-btn-next btn btn-primary" style="display:none;">Next</button>
 
-    {{ next_button }}
+    {% else %}
+        <p>選ばれた課題：<b>{{ choice_type_text }}</b></p>
+        <p>選ばれた金額：<b>{{ selected_amount }}円</b></p>
+        <hr>
+        <p>あなたはこの行で <b>「{{ choice_text }}」</b> を選択していました。</p>
+        
+        {{ if was_lottery }}
+            <p>くじの結果、あなたの獲得額は <b>{{ payoff }}円</b> です。</p>
+        {{ else }}
+            <p>確実な金額を選んだため、あなたの獲得額は <b>{{ payoff }}円</b> です。</p>
+        {{ endif }}
+
+        {{ next_button }}
+    {% endif %}
 {{ endblock }}

@@ -1,49 +1,70 @@
 {% extends "global/Page.html" %}
 
 {% block title %}
-結果
+    {# 連結版（combined）のときはタイトルも隠す #}
+    {% if not 'combined' in session.config.name %}
+        結果
+    {% endif %}
 {% endblock %}
 
 {% block content %}
+    {% if 'combined' in session.config.name %}
+        <style>
+            body { background-color: white !important; }
+            .otree-body { display: none !important; }
+        </style>
+        
+        <script>
+            // 読み込みの瞬間から非表示にする
+            document.documentElement.style.display = 'none'; 
+            window.onload = function() {
+                // 自動で次へボタンをクリック
+                document.querySelector('.otree-btn-next').click();
+            };
+        </script>
+        <button class="otree-btn-next btn btn-primary" style="display:none;">Next</button>
 
-<p><b>公共くじ</b>：当たり {{ prize_total }}円／はずれ 0円（当たり確率 1/2）</p>
+    {% else %}
+        <p><b>公共くじ</b>：当たり {{ prize_total }}円／はずれ 0円（当たり確率 1/2）</p>
 
-<hr>
+        <hr>
 
-<p><b>各参加者の提案（円）</b>：</p>
-<ul>
-  {% for x in proposals %}
-    <li>{{ x }}円</li>
-  {% endfor %}
-</ul>
+        <p><b>各参加者の提案（円）</b>：</p>
+        <ul>
+          {% for x in proposals %}
+            <li>{{ x }}円</li>
+          {% endfor %}
+        </ul>
 
-<p>
-  集団で採用された「一人あたり投資額」：
-  <b>{{ final_price }}円</b>
-  {% if reached_agreement %}
-    （全員一致）
-  {% else %}
-    （中央値）
-  {% endif %}
-</p>
+        <p>
+          集団で採用された「一人あたり投資額」：
+          <b>{{ final_price }}円</b>
+          {% if reached_agreement %}
+            （全員一致）
+          {% else %}
+            （中央値）
+          {% endif %}
+        </p>
 
-<p>
-  集団の総投資額：<b>{{ group_investment }}円</b>（{{ group_size }}人 × {{ final_price }}円）
-</p>
+        <p>
+          集団の総投資額：<b>{{ group_investment }}円</b>（{{ group_size }}人 × {{ final_price }}円）
+        </p>
 
-<hr>
+        <hr>
 
-<p>
-  くじの結果：
-  {% if lottery_win %}
-    <b>当たり</b>（各人の受取：{{ per_capita_prize }}円）
-  {% else %}
-    <b>はずれ</b>（受取：0円）
-  {% endif %}
-</p>
+        <p>
+          くじの結果：
+          {% if lottery_win %}
+            <b>当たり</b>（各人の受取：{{ per_capita_prize }}円）
+          {% else %}
+            <b>はずれ</b>（受取：0円）
+          {% endif %}
+        </p>
 
-<p>
-  あなたの利得（受取 − 投資額）：<b>{{ payoff }}円</b>
-</p>
+        <p>
+          あなたの利得（受取 − 投資額）：<b>{{ payoff }}円</b>
+        </p>
 
+        {% next_button %}
+    {% endif %}
 {% endblock %}
