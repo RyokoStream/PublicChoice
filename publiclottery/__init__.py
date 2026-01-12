@@ -35,6 +35,7 @@ class Propose(Page):
         if player.round_number == 1:
             return True
         try:
+            # 前のラウンドのグループ状態を参照して、合意済みならこの回はスキップ
             prev_group = player.group.in_round(player.round_number - 1)
             return not prev_group.reached_agreement
         except:
@@ -52,7 +53,6 @@ class Propose(Page):
                 g = group.in_round(r)
                 round_proposals = []
                 for p_in_g in g.get_players():
-                    # HTMLのあらゆる変数名（id, id_in_group, value, proposal）に対応
                     round_proposals.append({
                         'id': p_in_g.id_in_group,
                         'id_in_group': p_in_g.id_in_group,
@@ -99,27 +99,23 @@ class WaitAfterPropose(WaitPage):
             group.reached_agreement = False
             group.final_price = int(statistics.median(proposals))
 
-        # 結果が決まったら利得を計算し、保存する
         if group.reached_agreement or group.round_number == C.NUM_ROUNDS:
             group.lottery_win = random.random() < C.WIN_PROB
             prize_each = C.PRIZE_PER_PERSON if group.lottery_win else 0
+            
             for p in players:
                 p.payoff = prize_each - group.final_price
-                
-                # 【最重要】KeyErrorを回避するための二重保存
-                # 1. settings.py の定義への保存（試行）
+                p.participant.vars['public_lottery_payoff'] = p.payoff
+                p.participant.vars['final_price'] = group.final_price
+                p.participant.vars['reached_agreement'] = group.reached_agreement
                 try:
                     p.participant.public_lottery_payoff = p.payoff
                 except:
                     pass
-                
-                # 2. participant.vars への保存（確実）
-                p.participant.vars['public_lottery_payoff'] = p.payoff
 
 class Results(Page):
     @staticmethod
     def is_displayed(player):
-        # 連結実験時はここでは表示せず、最後（final_results）に出す
         is_combined = 'combined' in player.session.config.get('name', '').lower()
         if is_combined:
             return False
