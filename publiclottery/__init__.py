@@ -16,6 +16,7 @@ class Group(BaseGroup):
     final_price = models.IntegerField(initial=0)
     reached_agreement = models.BooleanField(initial=False)
     lottery_win = models.BooleanField()
+    prize_total = models.IntegerField(initial=0)
 
 class Player(BasePlayer):
     proposal = models.IntegerField(
@@ -35,10 +36,26 @@ class Propose(Page):
 
     @staticmethod
     def vars_for_template(player):
-        # 変数を極限まで減らしました
-        return {
-            'round_num': player.round_number
-        }
+        group = player.group
+        # HTMLが求めている変数をすべて作成
+        history_data = []
+        for r in range(1, player.round_number):
+            g = group.in_round(r)
+            # 各ラウンドの各プレイヤーの提案を取得
+            props = [{'proposal': p.field_maybe_none('proposal')} for p in g.get_players()]
+            history_data.append({
+                'round': r,
+                'proposals': props
+            })
+        
+        # HTML側の {{ round_number }}, {{ num_rounds }}, {{ lottery_text }} 等に対応
+        return dict(
+            round_number      = player.round_number,
+            num_rounds        = C.NUM_ROUNDS,
+            lottery_text      = f"公共くじ：当たり {C.PLAYERS_PER_GROUP * C.PRIZE_PER_PERSON}円／はずれ 0円",
+            PLAYERS_PER_GROUP = C.PLAYERS_PER_GROUP,
+            history           = history_data
+        )
 
 class WaitAfterPropose(WaitPage):
     @staticmethod
@@ -56,8 +73,9 @@ class WaitAfterPropose(WaitPage):
 
         if group.reached_agreement or group.round_number == C.NUM_ROUNDS:
             group.lottery_win = random.random() < C.WIN_PROB
+            prize_each = C.PRIZE_PER_PERSON if group.lottery_win else 0
             for p in players:
-                p.payoff = (C.PRIZE_PER_PERSON if group.lottery_win else 0) - group.final_price
+                p.payoff = prize_each - group.final_price
                 p.participant.vars['public_lottery_payoff'] = p.payoff
 
 class Results(Page):
