@@ -1,1 +1,1 @@
-otreepandasnumpy
+otreepandasnumpypsycopg2-binary
