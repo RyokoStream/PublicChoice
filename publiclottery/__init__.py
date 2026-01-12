@@ -35,17 +35,9 @@ class Propose(Page):
 
     @staticmethod
     def vars_for_template(player):
-        # HTMLで使う変数を、過不足なく「辞書」として渡します
-        history_data = []
-        for r in range(1, player.round_number):
-            g = player.group.in_round(r)
-            proposals = [p.field_maybe_none('proposal') for p in g.get_players()]
-            history_data.append({'round': r, 'proposals': proposals})
-        
+        # 変数を極限まで減らしました
         return {
-            'round_num': player.round_number,
-            'max_rounds': C.NUM_ROUNDS,
-            'history': history_data,
+            'round_num': player.round_number
         }
 
 class WaitAfterPropose(WaitPage):
@@ -64,9 +56,8 @@ class WaitAfterPropose(WaitPage):
 
         if group.reached_agreement or group.round_number == C.NUM_ROUNDS:
             group.lottery_win = random.random() < C.WIN_PROB
-            prize_each = C.PRIZE_PER_PERSON if group.lottery_win else 0
             for p in players:
-                p.payoff = prize_each - group.final_price
+                p.payoff = (C.PRIZE_PER_PERSON if group.lottery_win else 0) - group.final_price
                 p.participant.vars['public_lottery_payoff'] = p.payoff
 
 class Results(Page):
