@@ -1,29 +1,43 @@
-{% extends "global/Page.html" %}
+{{ block title }}
+    第2部：意思決定（{{ round_number }} / {{ num_rounds }} 回目）
+{{ endblock }}
 
-{% block title %}
-    ラウンド {{ round_number }} / {{ num_rounds }}
-{% endblock %}
+{{ block content }}
+    <div class="card debug-info_container">
+        <div class="card-body">
+            <p><strong>現在の状況：</strong></p>
+            <ul>
+                <li>{{ lottery_text }}</li>
+                <li>あなたのグループ人数：{{ PLAYERS_PER_GROUP }}名</li>
+            </ul>
+        </div>
+    </div>
 
-{% block content %}
-    <p><b>{{ lottery_text }}</b></p>
-
-    {% if history %}
-      <h4>これまでの提案（履歴）</h4>
-      {% for h in history %}
-        <p><b>ラウンド {{ h.round }}</b>：</p>
-        <ul>
-          {% for p in h.proposals %}
-            <li>P{{ p.id }} = {{ p.value }}円</li>
-          {% endfor %}
-        </ul>
-      {% endfor %}
-      <hr>
+    {% if round_number > 1 %}
+    <div class="card mt-3">
+        <div class="card-header">これまでの履歴</div>
+        <table class="table">
+            <tr>
+                <th>回</th>
+                <th>各メンバーの提案額</th>
+            </tr>
+            {% for r in history %}
+            <tr>
+                <td>{{ r.round }}回目</td>
+                <td>
+                    {% for p in r.proposals %}
+                        {{ p.proposal }}円 
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
     {% endif %}
 
-    <p>購入額（円）を入力してください（0〜1000）：</p>
-    
-    {# ここを formfield (単数形) にするか、このまま formfields (複数形) 1行だけにします #}
-    {{ formfields }}
+    <div class="mt-4">
+        {% formfield player.proposal label="あなたの提案額（0〜1000円）" %}
+        <button class="btn btn-primary">送信</button>
+    </div>
 
-    {% next_button %}
-{% endblock %}
+{{ endblock }}
