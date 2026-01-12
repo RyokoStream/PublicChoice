@@ -24,7 +24,7 @@ class Player(BasePlayer):
         min=0, max=1000
     )
 
-# --- PAGES ---
+# --- ページ定義 ---
 
 class Propose(Page):
     form_model = 'player'
@@ -34,61 +34,39 @@ class Propose(Page):
     def is_displayed(player):
         if player.round_number == 1:
             return True
-        try:
-            # 前のラウンドのグループ状態を参照して、合意済みならこの回はスキップ
-            prev_group = player.group.in_round(player.round_number - 1)
-            return not prev_group.reached_agreement
-        except:
-            return True
+        # 前のラウンドを参照し、合意済みならスキップ
+        prev_round = player.round_number - 1
+        return not player.group.in_round(prev_round).reached_agreement
 
     @staticmethod
     def vars_for_template(player):
-        group = player.group
-        group_size = len(group.get_players())
+        group_size = C.PLAYERS_PER_GROUP
         prize_total = group_size * C.PRIZE_PER_PERSON
         
         history = []
         for r in range(1, player.round_number):
-            try:
-                g = group.in_round(r)
-                round_proposals = []
-                for p_in_g in g.get_players():
-                    round_proposals.append({
-                        'id': p_in_g.id_in_group,
-                        'id_in_group': p_in_g.id_in_group,
-                        'value': p_in_g.field_maybe_none('proposal'),
-                        'proposal': p_in_g.field_maybe_none('proposal'),
-                    })
-                
-                history.append(dict(
-                    round=r,
-                    round_number=r,
-                    proposals=round_proposals,
-                ))
-            except:
-                continue
+            g = player.group.in_round(r)
+            round_proposals = []
+            for p_in_g in g.get_players():
+                round_proposals.append({
+                    'id': p_in_g.id_in_group,
+                    'proposal': p_in_g.field_maybe_none('proposal'),
+                })
+            history.append(dict(round=r, proposals=round_proposals))
         
         return dict(
-            round_number=player.round_number,
-            num_rounds=C.NUM_ROUNDS,
-            lottery_text=f"公共くじ：当たり {prize_total}円／はずれ 0円",
             history=history,
             prize_total=prize_total,
             group_size=group_size
         )
 
 class WaitAfterPropose(WaitPage):
-    title_text = "待機中"
-    body_text = "他の参加者の入力を待っています。"
-
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
-        proposals = [p.field_maybe_none('proposal') for p in players if p.field_maybe_none('proposal') is not None]
+        # proposalが入っていない場合に備えてデフォルト値(0)を考慮
+        proposals = [p.proposal if p.proposal is not None else 0 for p in players]
         
-        if len(proposals) < C.PLAYERS_PER_GROUP:
-            return
-
         all_same = len(set(proposals)) == 1
         group.prize_total = len(players) * C.PRIZE_PER_PERSON
 
@@ -98,20 +76,21 @@ class WaitAfterPropose(WaitPage):
         elif group.round_number == C.NUM_ROUNDS:
             group.reached_agreement = False
             group.final_price = int(statistics.median(proposals))
+        else:
+            group.reached_agreement = False
+            group.final_price = 0
 
+        # 合意した、あるいは最終回の場合に計算を実行
         if group.reached_agreement or group.round_number == C.NUM_ROUNDS:
             group.lottery_win = random.random() < C.WIN_PROB
             prize_each = C.PRIZE_PER_PERSON if group.lottery_win else 0
             
             for p in players:
                 p.payoff = prize_each - group.final_price
+                # HTMLで呼び出す可能性のある名前をすべて「確実」に保存
                 p.participant.vars['public_lottery_payoff'] = p.payoff
                 p.participant.vars['final_price'] = group.final_price
                 p.participant.vars['reached_agreement'] = group.reached_agreement
-                try:
-                    p.participant.public_lottery_payoff = p.payoff
-                except:
-                    pass
 
 class Results(Page):
     @staticmethod
@@ -123,19 +102,10 @@ class Results(Page):
 
     @staticmethod
     def vars_for_template(player):
-        group = player.group
-        players = group.get_players()
-        
-        return dict(
-            prize_total      = group.prize_total,
-            proposals        = [p.field_maybe_none('proposal') for p in players],
-            final_price      = group.final_price,
-            reached_agreement= group.reached_agreement,
-            group_investment = group.final_price * len(players),
-            group_size       = len(players),
-            lottery_win      = group.lottery_win,
-            per_capita_prize = C.PRIZE_PER_PERSON,
-            payoff           = player.payoff
-        )
+        return {
+            'payoff': player.payoff,
+            'final_price': player.group.final_price,
+            'lottery_win': player.group.lottery_win,
+        }
 
 page_sequence = [Propose, WaitAfterPropose, Results]
