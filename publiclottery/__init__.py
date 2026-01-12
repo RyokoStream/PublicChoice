@@ -30,65 +30,56 @@ class Propose(Page):
 
     @staticmethod
     def is_displayed(player):
+        # 1ラウンド目は必ず表示
         if player.round_number == 1:
             return True
-        prev_round = player.round_number - 1
-        return not player.group.in_round(prev_round).reached_agreement
+        # 2回目以降は、前のラウンドで合意が「成立していない」場合のみ表示
+        prev_g = player.group.in_round(player.round_number - 1)
+        return prev_g.reached_agreement == False
 
     @staticmethod
     def vars_for_template(player):
-        group_size = C.PLAYERS_PER_GROUP
-        prize_total = group_size * C.PRIZE_PER_PERSON
-        
+        # HTMLが要求する変数をすべて網羅
         history = []
         for r in range(1, player.round_number):
             g = player.group.in_round(r)
-            round_proposals = []
-            for p_in_g in g.get_players():
-                round_proposals.append({
-                    'id': p_in_g.id_in_group,
-                    'proposal': p_in_g.field_maybe_none('proposal'),
-                })
-            history.append(dict(round=r, proposals=round_proposals))
-        
-        # HTMLで使っている「round_number」と「num_rounds」を確実に追加
-        return dict(
-            round_number=player.round_number,
-            num_rounds=C.NUM_ROUNDS,
-            history=history,
-            prize_total=prize_total,
-            group_size=group_size,
-            lottery_text=f"公共くじ：当たり {prize_total}円／はずれ 0円"
-        )
+            history.append({
+                'round': r,
+                'proposals': [{'id': p.id_in_group, 'proposal': p.field_maybe_none('proposal')} for p in g.get_players()]
+            })
+        return {
+            'round_number': player.round_number,
+            'num_rounds': C.NUM_ROUNDS,
+            'history': history,
+            'prize_total': C.PLAYERS_PER_GROUP * C.PRIZE_PER_PERSON,
+            'lottery_text': f"当たり {C.PLAYERS_PER_GROUP * C.PRIZE_PER_PERSON}円 / はずれ 0円"
+        }
 
 class WaitAfterPropose(WaitPage):
-    title_text = "待機中"
-    body_text = "他の参加者の入力を待っています。"
+    title_text = "判定中"
+    body_text = "全員の入力を確認しています。"
 
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
-        proposals = [p.proposal if p.proposal is not None else 0 for p in players]
+        proposals = [p.proposal for p in players if p.proposal is not None]
         
-        all_same = len(set(proposals)) == 1
-        group.prize_total = len(players) * C.PRIZE_PER_PERSON
-
-        if all_same:
+        # 合意判定
+        if len(set(proposals)) == 1:
             group.reached_agreement = True
             group.final_price = proposals[0]
-        elif group.round_number == C.NUM_ROUNDS:
-            group.reached_agreement = False
-            group.final_price = int(statistics.median(proposals))
         else:
             group.reached_agreement = False
-            group.final_price = 0
+            if group.round_number == C.NUM_ROUNDS:
+                group.final_price = int(statistics.median(proposals))
 
+        # 最終結果の計算と保存
         if group.reached_agreement or group.round_number == C.NUM_ROUNDS:
             group.lottery_win = random.random() < C.WIN_PROB
             prize_each = C.PRIZE_PER_PERSON if group.lottery_win else 0
-            
             for p in players:
                 p.payoff = prize_each - group.final_price
+                # 他のアプリへ引き継ぐための保存
                 p.participant.vars['public_lottery_payoff'] = p.payoff
                 p.participant.vars['final_price'] = group.final_price
                 p.participant.vars['reached_agreement'] = group.reached_agreement
@@ -96,6 +87,7 @@ class WaitAfterPropose(WaitPage):
 class Results(Page):
     @staticmethod
     def is_displayed(player):
+        # 連結版(combined)でない、かつ（合意した or 最終ラウンド）
         is_combined = 'combined' in player.session.config.get('name', '').lower()
         if is_combined:
             return False
@@ -104,15 +96,12 @@ class Results(Page):
     @staticmethod
     def vars_for_template(player):
         group = player.group
-        return dict(
-            payoff=player.payoff,
-            final_price=group.final_price,
-            lottery_win=group.lottery_win,
-            reached_agreement=group.reached_agreement,
-            group_size=len(group.get_players()),
-            prize_total=group.prize_total,
-            proposals=[p.proposal for p in group.get_players()],
-            per_capita_prize=C.PRIZE_PER_PERSON
-        )
+        return {
+            'payoff': player.payoff,
+            'final_price': group.final_price,
+            'lottery_win': group.lottery_win,
+            'reached_agreement': group.reached_agreement,
+            'proposals': [p.proposal for p in group.get_players()],
+        }
 
 page_sequence = [Propose, WaitAfterPropose, Results]
