@@ -1,43 +1,31 @@
-{{ block title }}
-    第2部：意思決定（{{ round_number }} / {{ num_rounds }} 回目）
-{{ endblock }}
+{{ block title }} 第{{ round_number }}ラウンド：提案 {{ endblock }}
 
 {{ block content }}
-    <div class="card debug-info_container">
-        <div class="card-body">
-            <p><strong>現在の状況：</strong></p>
-            <ul>
-                <li>{{ lottery_text }}</li>
-                <li>あなたのグループ人数：{{ PLAYERS_PER_GROUP }}名</li>
-            </ul>
-        </div>
+    <div class="alert alert-info">
+        {{ lottery_text }}
     </div>
 
-    {% if round_number > 1 %}
-    <div class="card mt-3">
-        <div class="card-header">これまでの履歴</div>
-        <table class="table">
-            <tr>
-                <th>回</th>
-                <th>各メンバーの提案額</th>
-            </tr>
-            {% for r in history %}
-            <tr>
-                <td>{{ r.round }}回目</td>
-                <td>
-                    {% for p in r.proposals %}
-                        {{ p.proposal }}円 
-                    {% endfor %}
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+    {# 履歴を表示するセクション #}
+    {% if history %}
+    <table class="table">
+        <tr>
+            <th>ラウンド</th>
+            <th>提案内容</th>
+        </tr>
+        {% for r in history %}
+        <tr>
+            <td>{{ r.round }}</td>
+            <td>
+                {# Python側の構造に合わせてループ #}
+                {% for p in r.proposals %}
+                    {{ p.proposal }}円 &nbsp;
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
     {% endif %}
 
-    <div class="mt-4">
-        {% formfield player.proposal label="あなたの提案額（0〜1000円）" %}
-        <button class="btn btn-primary">送信</button>
-    </div>
-
+    {% formfields %}
+    <button class="btn btn-primary">送信</button>
 {{ endblock }}

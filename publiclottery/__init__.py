@@ -3,89 +3,105 @@ import random
 import statistics
 
 class C(BaseConstants):
-    NAME_IN_URL = 'publiclottery'
+    NAME_IN_URL = 'public_lottery_v3' # URLの重複を避けるため更新
     PLAYERS_PER_GROUP = 3
     NUM_ROUNDS = 3
     PRIZE_PER_PERSON = 1000 
     WIN_PROB = 0.5
     TOTAL_PRIZE = PLAYERS_PER_GROUP * PRIZE_PER_PERSON
 
-class Subsession(BaseSubsession): pass
+class Subsession(BaseSubsession):
+    pass
+
 class Group(BaseGroup):
     final_price = models.IntegerField(initial=0)
     reached_agreement = models.BooleanField(initial=False)
     lottery_win = models.BooleanField()
-    prize_total = models.IntegerField(initial=0)
 
 class Player(BasePlayer):
-    proposal = models.IntegerField(label="購入額", min=0, max=1000)
+    proposal = models.IntegerField(
+        label="あなたの提案額（0〜1000円）",
+        min=0, max=1000
+    )
 
 def vars_for_all_pages(player: Player):
-    # 履歴データの作成
     history_data = []
-    for r in range(1, player.round_number):
-        g = player.group.in_round(r)
-        props = [{'proposal': p.field_maybe_none('proposal')} for p in g.get_players()]
-        history_data.append({'round': r, 'proposals': props})
-    
+    # 過去のラウンドを遡る
+    for r_num in range(1, player.round_number):
+        try:
+            g = player.group.in_round(r_num)
+            
+            # HTML側の {% for p in r.proposals %} が100%ループできるように
+            # リストを明示的に作成します
+            round_proposals = []
+            for p in g.get_players():
+                val = p.field_maybe_none('proposal')
+                if val is not None:
+                    # ここが line 34 の {{ p.proposal }} に直結します
+                    round_proposals.append({'proposal': val})
+            
+            history_data.append({
+                'round': r_num,
+                'proposals': round_proposals # キー名は必ず 'proposals'
+            })
+        except:
+            continue
+
     return dict(
+        history           = history_data,
+        lottery_text      = f"公共くじ：当たり {C.TOTAL_PRIZE}円／はずれ 0円",
+        prize_total       = C.TOTAL_PRIZE,
         round_number      = player.round_number,
         num_rounds        = C.NUM_ROUNDS,
-        lottery_text      = f"当たり {C.TOTAL_PRIZE}円 / はずれ 0円",
-        prize_total       = C.TOTAL_PRIZE,
         PLAYERS_PER_GROUP = C.PLAYERS_PER_GROUP,
-        history           = history_data,
         final_price       = player.group.final_price,
-        lottery_win       = player.group.lottery_win,
+        lottery_win       = player.group.field_maybe_none('lottery_win'),
         reached_agreement = player.group.reached_agreement,
-        payoff            = player.payoff
+        payoff            = player.payoff or 0
     )
 
 class Propose(Page):
     form_model = 'player'
     form_fields = ['proposal']
-    
+
     @staticmethod
     def is_displayed(player):
-        # 第1ラウンドは必ず表示。それ以降は「まだ合意していない」場合のみ表示
         if player.round_number == 1:
             return True
-        return not player.group.in_round(player.round_number - 1).reached_agreement
+        # 前のラウンドの合意状況を確認
+        prev_g = player.group.in_round(player.round_number - 1)
+        return not prev_g.reached_agreement
 
     vars_for_template = vars_for_all_pages
 
 class WaitAfterPropose(WaitPage):
     title_text = "判定中..."
+    
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
-        proposals = [p.proposal for p in players if p.proposal is not None]
+        props = [p.proposal for p in players if p.proposal is not None]
         
-        # 全員一致の判定
-        if len(set(proposals)) == 1:
+        # 全員一致のロジック
+        if len(set(props)) == 1:
             group.reached_agreement = True
-            group.final_price = proposals[0]
-        else:
+            group.final_price = props[0]
+        elif group.round_number == C.NUM_ROUNDS:
             group.reached_agreement = False
-            # 最終ラウンドのみ中央値で決定
-            if group.round_number == C.NUM_ROUNDS:
-                group.final_price = int(statistics.median(proposals))
+            group.final_price = int(statistics.median(props))
 
-        # 合意した、または最終ラウンドなら利得計算
+        # 計算
         if group.reached_agreement or group.round_number == C.NUM_ROUNDS:
             group.lottery_win = random.random() < C.WIN_PROB
             prize_each = C.PRIZE_PER_PERSON if group.lottery_win else 0
             for p in players:
                 p.payoff = prize_each - group.final_price
-                # 念のため参加者変数にも保存
-                p.participant.vars['public_lottery_payoff'] = p.payoff
 
 class Results(Page):
     @staticmethod
     def is_displayed(player):
-        # 「今合意した」または「最後（第3ラウンド）が終わった」時のみ表示
         return player.group.reached_agreement or player.round_number == C.NUM_ROUNDS
-    
+
     vars_for_template = vars_for_all_pages
 
 page_sequence = [Propose, WaitAfterPropose, Results]
